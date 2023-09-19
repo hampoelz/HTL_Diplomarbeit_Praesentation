@@ -1,0 +1,39 @@
+name: Automated Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+      - name: Copy assets
+        run: |
+          mkdir build
+          cp -r assets/ build/
+      - name: Build presentation
+        run: npx @marp-team/marp-cli@latest --html index.md -o build/index.html
+      - name: Upload page artifacts
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: build
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
